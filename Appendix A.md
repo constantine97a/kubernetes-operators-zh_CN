@@ -15,7 +15,7 @@
     ```shell
    $ kubectl apply -f deploy/crds/*_crd.yaml
    ```
-4. 部署服务帐户和角色。 SDK 生成 Operator 所需的服务帐号和角色。 更新这些以将角色的权限限制为操作员运行所需的最低权限。 适当地确定角色权限范围后，将资源部署到集群中：
+4. 部署服务帐户和角色。 SDK 生成 Operator 所需的服务帐号和角色。 更新这些以将角色的权限限制为Operator运行所需的最低权限。 适当地确定角色权限范围后，将资源部署到集群中：
    ```shell 
    $ kubectl apply -f deploy/service_account.yaml 
    $ kubectl apply -f deploy/role.yaml
