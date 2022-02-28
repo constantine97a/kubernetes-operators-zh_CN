@@ -10,7 +10,7 @@
 
 
 ```
-# KUbersnetes Operators - 中文翻译
+# Kubersnetes Operators - 中文翻译
 
 - 作者： [Jason Dobies & Joshua Wood ]
 - 原名：[《Kubernetes Operators》]
