@@ -1,7 +1,7 @@
 # Running an Operator as a Deployment Inside a Cluster
 在集群外运行 Operator，便于测试和调试，但生产 Operator 运行为 Kubernetes 部署。这种部署方式涉及一些额外的步骤：
 
-1. 构建图像。 Operator SDK 的构建命令链到底层 Docker 守护进程以构建 Operator 镜像，并在运行时获取完整的镜像名称和版本：
+1. 构建镜像。 Operator SDK 的构建命令链到底层 Docker 守护进程以构建 Operator 镜像，并在运行时获取完整的镜像名称和版本：
    ```shell
     $ operator-sdk build jdob/visitors-operator:0.1
    ```
@@ -9,7 +9,7 @@
    ```shell
    spec -> template -> spec -> containers
    ```
-   生成的文件默认值为 REPLACE_IMAGE，您应该更新它以反映在上一个命令中构建的图像的名称。 构建后，将映像推送到外部可访问的存储库，例如 Quay.io (https://quay.io) 或 Docker Hub (https://hub.docker.com)。
+   生成的文件默认值为 REPLACE_IMAGE，您应该更新它以反映在上一个命令中构建的镜像的名称。 构建后，将镜像推送到外部可访问的存储库，例如 Quay.io (https://quay.io) 或 Docker Hub (https://hub.docker.com)。
 
 3. 部署 CRD。 SDK 生成一个可以正常工作的骨架 CRD， 但有关充实此文件的更多信息，请参见附录 B：
     ```shell
