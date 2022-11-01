@@ -1,0 +1,306 @@
+groups:
+  - name: default.k8s
+    rules:
+    - alert: PodNotReady
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 5 minutes.
+      expr: |
+          sum by (namespace, pod) (kube_pod_status_phase{k8s_cluster_id="",job="kube-state-metrics", phase=~"Pending|Unknown|Failed"}) > 0
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: pod
+        prometheus_rule_name: default-PodNotReady
+    - alert: PodIsPending
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a pending state for longer than 5 minutes.
+      expr: |
+          sum by (namespace, pod) (kube_pod_status_phase{k8s_cluster_id="",job="kube-state-metrics", phase=~"Pending"}) > 0
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: pod
+        prometheus_rule_name: default-PodIsPending
+    - alert: PodCrashLooping
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container}} is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+      expr: |
+          rate(kube_pod_container_status_restarts_total{k8s_cluster_id="",job="kube-state-metrics"}[15m]) * 60 * 5 > 0
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: pod
+        prometheus_rule_name: default-PodCrashLooping
+    - alert: PodContainerTerminated
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} has been in a terminated state for longer than 5 minutes.
+      expr: |
+          sum by (namespace, pod, container) (kube_pod_container_status_terminated{k8s_cluster_id="",job="kube-state-metrics"}) > 0
+          and
+          sum by (namespace, pod, container)(kube_pod_container_status_terminated_reason{k8s_cluster_id="",job="kube-state-metrics",reason!="Completed"}) >0
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: pod
+        prometheus_rule_name: default-PodContainerTerminated
+    - alert: PodContainerWaiting
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}has been in a waiting state for longer than 5 minutes.
+      expr: |
+         sum by (namespace, pod, container) (kube_pod_container_status_waiting{k8s_cluster_id="",job="kube-state-metrics"}) ==1
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: pod
+        prometheus_rule_name: default-PodContainerWaiting
+    - alert: NodeNotReady
+      annotations:
+        message: '{{ $labels.node }} has been unready for more than 5 minutes.'
+      expr: |
+         kube_node_status_condition{k8s_cluster_id="",job="kube-state-metrics",condition="Ready",status="true"} == 0
+      for: 5m
+      labels:
+        severity: emergency
+        resource_type: node
+        prometheus_rule_name: default-NodeNotReady
+    - alert: DeploymentReplicasMismatch
+      annotations:
+        message: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not matched the expected number of replicas for longer than 5 minutes.
+      expr: |
+        kube_deployment_spec_replicas{k8s_cluster_id="",job="kube-state-metrics"}!=kube_deployment_status_replicas_available{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: deployment
+        prometheus_rule_name: default-DeploymentReplicasMismatch
+    - alert: DeploymentGenerationMismatch
+      annotations:
+        message: Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment}} does not match, this indicates that the Deployment has failed but has not been rolled back.
+      expr: |
+        kube_deployment_status_observed_generation{k8s_cluster_id="",job="kube-state-metrics"}!=kube_deployment_metadata_generation{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 15m
+      labels:
+        severity: warning
+        resource_type: deployment
+        prometheus_rule_name: default-DeploymentGenerationMismatch
+    - alert: StatefulsetReplicasMismatch
+      annotations:
+        message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has not matched the expected number of replicas for longer than 5 minutes.
+      expr: |
+        kube_statefulset_status_replicas_ready{k8s_cluster_id="",job="kube-state-metrics"}
+                  !=
+        kube_statefulset_status_replicas{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: statefulset
+        prometheus_rule_name: default-StatefulsetReplicasMismatch
+    - alert: StatefulsetGenerationMismatch
+      annotations:
+        message: StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset
+          }} does not match, this indicates that the StatefulSet has failed but has
+          not been rolled back.
+      expr: |
+        kube_statefulset_status_observed_generation{k8s_cluster_id="",job="kube-state-metrics"}
+                  !=
+        kube_statefulset_metadata_generation{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: statefulset
+        prometheus_rule_name: default-StatefulsetGenerationMismatch
+    - alert: CoreDNSDown
+      annotations:
+        message:  CoreDNS has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kube-dns"} == 1)
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: coredns
+        resource_instance: coreDNS
+        prometheus_rule_name: default-CoreDNSDown
+    - alert: CoreDNSRequestFaild
+      annotations:
+        message: POD {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} response code REFUSE, coreDNS request faild!
+      expr: |
+        irate(coredns_dns_response_rcode_count_total{k8s_cluster_id="",rcode=~"REFUSE"}[1m])>0
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: coredns
+        resource_instance: coreDNS
+        prometheus_rule_name: default-CoreDNSRequestFaild
+    - alert: EtcdDown
+      annotations:
+        message: Etcd has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="etcd"} == 1)
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: etcd
+        resource_instance: etcd
+        prometheus_rule_name: default-EtcdDown
+    - alert: EtcdInsufficientMembers
+      annotations:
+        message: Etcd insufficient members.
+      expr: |
+        count(up{k8s_cluster_id="",job="etcd"} == 0)-(count(up{k8s_cluster_id="",job="etcd"})/ 2 - 1)>0
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: etcd
+        resource_instance: etcd
+        prometheus_rule_name: default-EtcdInsufficientMembers
+    - alert: EtcdNoLeader
+      annotations:
+        message: Etcd no Leader.
+      expr: |
+        etcd_server_has_leader{k8s_cluster_id="",job="etcd"} ==0
+      for: 5m
+      labels:
+        severity: warning
+        prometheus_rule_name: default-EtcdNoLeader
+        resource_type: etcd
+        resource_instance: etcd
+    - alert: K8SClientCertificateExpiration
+      annotations:
+        message:  A client certificate used to authenticate to the apiserver is expiring
+          in less than 7.0 days.
+      expr: |
+        apiserver_client_certificate_expiration_seconds_count{k8s_cluster_id="",job="apiserver"} > 0 and histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{k8s_cluster_id="",job="apiserver"}[5m]))) < 604800
+      for: 5m
+      labels:
+        severity: warning
+        resource_type: k8sClientCertificate
+        resource_instance: k8sclientcertificate
+        prometheus_rule_name: default-K8SClientCertificateExpirat
+    - alert: K8SControllerManagerDown
+      annotations:
+        message:  KubeControllerManager has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kube-controller-manager"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        resource_type: kubecontrollermanager
+        resource_instance: kube-controller-manager
+        prometheus_rule_name: default-K8SControllerManagerDown
+    - alert: K8sKubeletDown
+      annotations:
+        message:  Kubelet has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kubelet"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        prometheus_rule_name: default-K8sKubeletDown
+        resource_type: kubelet
+        resource_instance: kubelet
+    - alert: KubeSchedulerDown
+      annotations:
+        message:  KubeScheduler has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kube-scheduler"} == 1)
+      for: 5m
+      labels:
+        resource_type: emergency
+        prometheus_rule_name: default-KubeSchedulerDown
+        resource: kubescheduler
+        resource_instance: kube-scheduler
+    - alert: KubeApiserverDown
+      annotations:
+        message:  KubeAPI has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="apiserver"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        prometheus_rule_name: default-KubeApiserverDown
+        resource_type: apiserver
+        resource_instance: apiserver
+    - alert: KubeCPUOvercommit1
+      annotations:
+        message:  Cluster has overcommitted CPU resource requests for Pods and cannot
+          tolerate node failure.
+      expr: |
+        sum(namespace:kube_pod_container_resource_requests_cpu_cores:sum)
+                  /
+        sum(kube_node_status_allocatable_cpu_cores)
+                  >
+        (count(kube_node_status_allocatable_cpu_cores)-1) / count(kube_node_status_allocatable_cpu_cores)
+      for: 5m
+      labels:
+        severity: warning
+        prometheus_rule_name: default-KubeCPUOvercommit1
+        resource_type: kubecpuovercommit
+        resource_instance: kubeCPUOvercommit
+    - alert: KubeCPUOvercommit2
+      annotations:
+        message:  Cluster has overcommitted CPU resource requests for Namespaces.
+      expr: |
+        sum(kube_resourcequota{k8s_cluster_id="",job="kube-state-metrics", type="hard", resource="cpu"})
+                 /
+        sum(kube_node_status_allocatable_cpu_cores{k8s_cluster_id="",job="kube-state-metrics"})
+                 > 1.5
+      for: 5m
+      labels:
+        severity: warning
+        prometheus_rule_name: default-KubeCPUOvercommit2
+        resource_type: kubecpuovercommit
+        resource_instance: kubeCPUOvercommit
+    - alert: KubeMemOvercommit1
+      annotations:
+        message:  Cluster has overcommitted memory resource requests for Pods and cannot
+          tolerate node failure.
+      expr: |
+        sum(namespace:kube_pod_container_resource_requests_memory_bytes:sum)
+                  /
+        sum(kube_node_status_allocatable_memory_bytes)
+                  >
+        (count(kube_node_status_allocatable_memory_bytes)-1)
+                  /
+        count(kube_node_status_allocatable_memory_bytes)
+      for: 5m
+      labels:
+        severity: warning
+        prometheus_rule_name: default-KubeMemOvercommit1
+        resource_type: kubememovercommit
+        resource_instance: KubeMemOvercommit
+    - alert: KubeMemOvercommit2
+      annotations:
+        message:  Cluster has overcommitted memory resource requests for Namespaces.
+      expr: |
+        sum(kube_resourcequota{k8s_cluster_id="",job="kube-state-metrics", type="hard", resource="memory"})
+                  /
+        sum(kube_node_status_allocatable_memory_bytes{k8s_cluster_id="",job="node-exporter"})
+                  > 1.5
+      for: 5m
+      labels:
+        severity: warning
+        prometheus_rule_name: default-KubeMemOvercommit2
+        resource_type: kubememovercommit
+        resource_instance: KubeMemOvercommit
+    - alert: PersistentVolumeClaimErrors
+      annotations:
+        message:  The persistent volume claim {{ $labels.namespace }} / {{ $labels.persistentvolumeclaim }} has status {{ $labels.phase }}.
+      expr: |
+        kube_persistentvolumeclaim_status_phase {k8s_cluster_id="",phase=~"Failed|Pending",job="kube-state-metrics"} > 0
+      for: 5m
+      labels:
+        severity: warning
+        prometheus_rule_name: default-PersistentVolumeClaimErrors
+        resource_type: persistentvolumeclaim
+  - name: default.physical
+    rules:
+      - alert: ServerUnavailable
+        annotations:
+          message: The Server {{$labels.host_name}} {{$labels.manageIp}} Unavailable.
+        expr: |
+          up{k8s_cluster_id="",job="physical"} ==0
+        for: 5m
+        labels:
+          severity: emergency
+          resource_type: physical_machine
+          prometheus_rule_name: default-ServerUnavailable
