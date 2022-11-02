@@ -295,7 +295,7 @@ groups:
 
       - record: kubevirt_vmsnapshot_disks_restored_from_source_bytes
         expr: |
-          intstr.FromString("sum by(vm_name, vm_namespace) (kube_persistentvolumeclaim_resource_requests_storage_bytes * on(persistentvolumeclaim, namespace) group_left(vm_name, vm_namespace) kubevirt_vmsnapshot_persistentvolumeclaim_labels)"),
+          sum by(vm_name, vm_namespace) (kube_persistentvolumeclaim_resource_requests_storage_bytes * on(persistentvolumeclaim, namespace) group_left(vm_name, vm_namespace) kubevirt_vmsnapshot_persistentvolumeclaim_labels)
 
       - alert: KubeVirtVMIExcessiveMigrations
         annotations:
