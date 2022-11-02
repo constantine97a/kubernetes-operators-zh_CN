@@ -98,8 +98,7 @@ groups:
         annotations:
           message: "More than 80% of the rest calls failed in virt-controller for the last 5 minutes."
         expr: |
-            sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-controller-.*",code=~"(4|5)[0-9][0-9]"}[5m]))
-           /  sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-controller-.*"}[5m])) >= 0.8
+            sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-controller-.*",code=~"(4|5)[0-9][0-9]"}[5m])) / sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-controller-.*"}[5m])) >= 0.8
         for: 5m
         labels:
           severity: "critical"
@@ -130,8 +129,7 @@ groups:
         annotations:
           message: "More than 5% of the rest calls failed in virt-controller for the last hour."
         expr: |
-          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*",code=~"(4|5)[0-9][0-9]"}[60m]))
-           /  sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*"}[60m]))>0.05
+          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*",code=~"(4|5)[0-9][0-9]"}[60m]))  /  sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*"}[60m]))>0.05
         labels:
           severity: warning
 
@@ -139,8 +137,7 @@ groups:
         annotations:
           message: More than 80% of the rest calls failed in virt-controller for the last hour
         expr: |
-          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*",code=~"(4|5)[0-9][0-9]"}[5m]))
-           /sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*"}[5m]))>0.8
+          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*",code=~"(4|5)[0-9][0-9]"}[5m]))  /sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-operator-.*"}[5m]))>0.8
         for: 10m
         labels:
           severity: critical
@@ -190,8 +187,7 @@ groups:
         annotations:
           message: Some virt-handlers failed to roll out.
         expr: |
-          (kube_daemonset_status_number_ready{namespace='kubevirt', daemonset='virt-handler'}
-          - kube_daemonset_status_desired_number_scheduled{namespace='kubevirt', daemonset='virt-handler'})!=0
+          (kube_daemonset_status_number_ready{namespace='kubevirt', daemonset='virt-handler'} - kube_daemonset_status_desired_number_scheduled{namespace='kubevirt', daemonset='virt-handler'})!=0
         for: 15m
         labels:
           severity: warning
@@ -200,8 +196,7 @@ groups:
         annotations:
           message: More than 5% of the rest calls failed in virt-handler for the last hour.
         expr: |
-          sum(rate ( rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*",code=~"(4|5)[0-9][0-9]"} [60m] ) )
-          /  sum ( rate ( rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*"} [60m] ) ) >= 0.05
+          sum(rate ( rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*",code=~"(4|5)[0-9][0-9]"} [60m] ) )  /  sum ( rate ( rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*"} [60m] ) ) >= 0.05
         labels:
           severity: warning
 
@@ -210,8 +205,7 @@ groups:
         annotations:
           message: More than 80% of the rest calls failed in virt-handler for last five minutes.
         expr: |
-          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*",code=~"(4|5)[0-9][0-9]"}[5m]))
-          /sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*"}[5m]))>=0.8
+          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*",code=~"(4|5)[0-9][0-9]"}[5m])) /sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-handler-.*"}[5m]))>=0.8
         labels:
           severity: critical
 
@@ -219,8 +213,7 @@ groups:
         annotations:
           message: More than 5% of the rest calls failed in virt-api for the last hour.
         expr: |
-          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*",code=~"(4|5)[0-9][0-9]"}[60m]))
-          / sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*"}[60m]))>= 0.05
+          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*",code=~"(4|5)[0-9][0-9]"}[60m]))/sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*"}[60m]))>= 0.05
         labels:
           severity: warning
 
@@ -228,8 +221,7 @@ groups:
         annotations:
           message: More than 80% of the rest calls failed in virt-api for the last five minutes.
         expr: |
-          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*",code=~"(4|5)[0-9][0-9]"}[60m]))
-          /  sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*"}[60m])) >= 0.8
+          sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*",code=~"(4|5)[0-9][0-9]"}[60m]))/sum(rate(rest_client_requests_total{namespace="kubevirt",pod=~"virt-api-.*"}[60m])) >= 0.8
         labels:
           severity: critical
 
