@@ -302,7 +302,7 @@ groups:
           message: "VirtualMachineInstance {{ $labels.vmi }} has been migrated more than 12 times during the last 24 hours"
           summary: "An excessive amount of migrations have been detected on a VirtualMachineInstance in the last 24 hours."
         expr: |
-          sum by (vmi) (max_over_time(kubevirt_migrate_vmi_succeeded_total[1d])) >= 12
+          sum by(vmi) (max_over_time(kubevirt_migrate_vmi_succeeded_total[1d])) >= 12
         labels:
           severity: warning
 
@@ -312,7 +312,6 @@ groups:
           summary: "A Virtual Machine has been in an unwanted starting state for more than 5 minutes."
         expr: |
           time() - kubevirt_vm_starting_status_last_transition_timestamp_seconds >= 300 and kubevirt_vm_starting_status_last_transition_timestamp_seconds != 0
-
         labels:
           severity: warning
 
