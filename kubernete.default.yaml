@@ -1,0 +1,434 @@
+groups:
+  - name: kubernetes-default
+    rules:
+    - alert: PodNotReady
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }} 持续5分钟处于未就绪状态.
+        summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 5 minutes.
+      expr: |
+          sum by (namespace, pod) (kube_pod_status_phase{k8s_cluster_id="",job="kube-state-metrics", phase=~"Pending|Unknown|Failed"}) > 0
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: PodNotReady
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: pod
+        rule_type: '1'
+
+    - alert: PodIsPending
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }} 持续5分钟处于Pending状态.
+        summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a pending state for longer than 5 minutes.
+      expr: |
+          sum by (namespace, pod) (kube_pod_status_phase{k8s_cluster_id="",job="kube-state-metrics", phase=~"Pending"}) > 0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: PodIsPending
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: pod
+        rule_type: '1'
+
+    - alert: PodCrashLooping
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container}} 在过去5分钟内持续重启 {{ printf "%.2f" $value }}次.
+        summary: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container}} is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+      expr: |
+          rate(kube_pod_container_status_restarts_total{k8s_cluster_id="",job="kube-state-metrics"}[15m]) * 60 * 5 > 0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: PodCrashLooping
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: pod
+        rule_type: '1'
+
+    - alert: PodContainerTerminated
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} 在过去5分钟内持续处于Terminate状态.
+        summary: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} has been in a terminated state for longer than 5 minutes.
+      expr: |
+          sum by (namespace, pod, container) (kube_pod_container_status_terminated{k8s_cluster_id="",job="kube-state-metrics"}) > 0
+          and
+          sum by (namespace, pod, container)(kube_pod_container_status_terminated_reason{k8s_cluster_id="",job="kube-state-metrics",reason!="Completed"}) >0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: PodContainerTerminated
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: pod
+        rule_type: '1'
+
+    - alert: PodContainerWaiting
+      annotations:
+        message: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}持续5分钟处于Waiting状态.
+        summary: Pod {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}has been in a waiting state for longer than 5 minutes.
+      expr: |
+         sum by (namespace, pod, container) (kube_pod_container_status_waiting{k8s_cluster_id="",job="kube-state-metrics"}) ==1
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: PodContainerWaiting
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: pod
+        rule_type: '1'
+
+    - alert: NodeNotReady
+      annotations:
+        message: '{{ $labels.node }}持续5分钟处于未就绪状态.'
+        summary: '{{ $labels.node }} has been unready for more than 5 minutes.'
+      expr: |
+         kube_node_status_condition{k8s_cluster_id="",job="kube-state-metrics",condition="Ready",status="true"} == 0
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: NodeNotReady
+        resource_type: node
+        custom_rule_type: P
+        resource_instance: node
+        rule_type: '1'
+
+    - alert: NodeCPUShortage
+      annotations:
+        message: 节点{{ $labels.node }} 剩余可分配CPU资源不足10%.
+        summary: Node {{ $labels.node }} 剩余可分配CPU资源不足10%.
+      for: 5m
+      expr: |
+        kube_node_status_allocatable{resource='cpu',k8s_cluster_id=''}/kube_node_status_capacity{resource='cpu',k8s_cluster_id=''}*100<10
+      labels:
+        severity: warning
+        crd_rule_name: NodeCPUShortage
+        resource_type: node
+        custom_rule_type: P
+        resource_instance: node
+        rule_type: '1'
+
+
+    - alert: NodeMemoryShortage
+      annotations:
+        message: Node {{ $labels.node }} 剩余可分配内存资源不足10%.
+        summary: Node {{ $labels.node }} 剩余可分配内存资源不足10%.
+      for: 5m
+      expr: |
+        kube_node_status_allocatable{resource='memory',k8s_cluster_id=''}/kube_node_status_capacity{resource='memory',k8s_cluster_id=''}*100<10
+      labels:
+        severity: warning
+        crd_rule_name: NodeMemoryShortage
+        resource_type: node
+        custom_rule_type: P
+        resource_instance: node
+        rule_type: '1'
+
+    - alert: NodeLvmShortage
+      annotations:
+        message: Node {{ $labels.node }} 剩余可分配存储资源不足10%.
+        summary: Node {{ $labels.node }} 剩余可分配存储资源不足10%.
+      for: 5m
+      expr: |
+        topolvm_volumegroup_available_bytes{device_class="datapool"}/topolvm_volumegroup_size_bytes{device_class="datapool"}*100<10
+      labels:
+        severity: warning
+        crd_rule_name: NodeLvmShortage
+        resource_type: node
+        custom_rule_type: P
+        resource_instance: node
+        rule_type: '1'
+
+    - alert: DeploymentReplicasMismatch
+      annotations:
+        message: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} 已经持续5分钟未能达到期望的副本数.
+        summary: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not matched the expected number of replicas for longer than 5 minutes.
+      expr: |
+        kube_deployment_spec_replicas{k8s_cluster_id="",job="kube-state-metrics"}!=kube_deployment_status_replicas_available{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: NodeLvmShortage
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: deployment
+        rule_type: '1'
+
+    - alert: DeploymentGenerationMismatch
+      annotations:
+        message: Deployment{{ $labels.namespace }}/{{ $labels.deployment}}的生成不匹配, 这表示部署失败但是尚未回滚.
+        summary: Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment}} does not match, this indicates that the Deployment has failed but has not been rolled back.
+      expr: |
+        kube_deployment_status_observed_generation{k8s_cluster_id="",job="kube-state-metrics"}!=kube_deployment_metadata_generation{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 15m
+      labels:
+        severity: warning
+        crd_rule_name: DeploymentGenerationMismatch
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: deployment
+        rule_type: '1'
+
+    - alert: StatefulsetReplicasMismatch
+      annotations:
+        message: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} 已经持续5分钟未能达到期望的副本数.
+        summary: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has not matched the expected number of replicas for longer than 5 minutes.
+      expr: |
+        kube_statefulset_status_replicas_ready{k8s_cluster_id="",job="kube-state-metrics"}
+                  !=
+        kube_statefulset_status_replicas{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: StatefulsetReplicasMismatch
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: statefulset
+        rule_type: '1'
+
+
+    - alert: StatefulsetGenerationMismatch
+      annotations:
+        message: StatefulSet{{ $labels.namespace }}/{{ $labels.statefulset }}的生成不匹配, 这表示部署失败但是尚未回滚.
+        summary: StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset }} does not match, this indicates that the StatefulSet has failed but has not been rolled back.
+      expr: |
+        kube_statefulset_status_observed_generation{k8s_cluster_id="",job="kube-state-metrics"}
+                  !=
+        kube_statefulset_metadata_generation{k8s_cluster_id="",job="kube-state-metrics"}
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: StatefulsetGenerationMismatch
+        resource_type: pod
+        custom_rule_type: P
+        resource_instance: statefulset
+        rule_type: '1'
+
+
+    - alert: CoreDNSDown
+      annotations:
+        message: CoreDNS下线.
+        summary:  CoreDNS has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kube-dns"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: CoreDNSDown
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: coredns
+        rule_type: '1'
+
+
+    - alert: CoreDNSRequestFaild
+      annotations:
+        message: POD {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}拒绝服务, CoreDns服务失败!
+        summary: POD {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} response code REFUSE, coreDNS request faild!
+      expr: |
+        irate(coredns_dns_response_rcode_count_total{k8s_cluster_id="",rcode=~"REFUSE"}[1m])>0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: CoreDNSRequestFaild
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: coredns
+        rule_type: '1'
+
+
+
+    - alert: EtcdDown
+      annotations:
+        message: ETCD服务下线.
+        summary: Etcd has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="etcd"} == 1)
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: EtcdDown
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: coredns
+        rule_type: '1'
+
+    - alert: EtcdInsufficientMembers
+      annotations:
+        message: Etcd集群Peer不足.
+        summary: Etcd insufficient members.
+      expr: |
+        count(up{k8s_cluster_id="",job="etcd"} == 0)-(count(up{k8s_cluster_id="",job="etcd"})/ 2 - 1)>0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: EtcdInsufficientMembers
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: etcd
+        rule_type: '1'
+
+    - alert: EtcdNoLeader
+      annotations:
+        message: ETCD没有领导节点.
+        summary: Etcd no Leader.
+      expr: |
+        etcd_server_has_leader{k8s_cluster_id="",job="etcd"} ==0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: EtcdNoLeader
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: etcd
+        rule_type: '1'
+
+
+    - alert: K8SClientCertificateExpiration
+      annotations:
+        message: 用于向apiserver进行身份验证的客户端证书将在7天内到期.
+        summary: A client certificate used to authenticate to the apiserver is expiring in less than 7 days.
+      expr: |
+        apiserver_client_certificate_expiration_seconds_count{k8s_cluster_id="",job="apiserver"} > 0 and histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{k8s_cluster_id="",job="apiserver"}[5m]))) < 604800
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: K8SClientCertificateExpiration
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: kube-certificate
+        rule_type: '1'
+
+
+    - alert: K8SControllerManagerDown
+      annotations:
+        message:  KubeControllerManager服务下线.
+        summary:  KubeControllerManager has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kube-controller-manager"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: K8SControllerManagerDown
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: service
+        rule_type: '1'
+
+
+    - alert: K8sKubeletDown
+      annotations:
+        message:  Kubelet服务下线.
+        summary:  Kubelet has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kubelet"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: K8sKubeletDown
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: node
+        rule_type: '1'
+
+
+
+    - alert: KubeSchedulerDown
+      annotations:
+        message:  KubeScheduler服务下线.
+        summary:  KubeScheduler has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="kube-scheduler"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: KubeSchedulerDown
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: service
+        rule_type: '1'
+
+    - alert: KubeApiserverDown
+      annotations:
+        message: KubeAPIServer服务下线.
+        summary: KubeAPIServer has disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{k8s_cluster_id="",job="apiserver"} == 1)
+      for: 5m
+      labels:
+        severity: emergency
+        crd_rule_name: KubeApiserverDown
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: job
+        rule_type: '1'
+
+    - alert: KubeCPUOvercommit
+      annotations:
+        message: 群集已过度提交Pods的CPU资源请求，无法容忍节点故障.
+        summary: Cluster has overcommitted CPU resource requests for Pods and cannot tolerate node failure.
+      expr: |
+        sum(namespace:kube_pod_container_resource_requests_cpu_cores:sum)
+                  /
+        sum(kube_node_status_allocatable_cpu_cores)
+                  >
+        (count(kube_node_status_allocatable_cpu_cores)-1) / count(kube_node_status_allocatable_cpu_cores)
+      for: 5m
+      labels:
+        severity: critical
+        crd_rule_name: KubeCPUOvercommit
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: kubernetes
+        rule_type: '1'
+
+    - alert: KubeCPUOvercommit
+      annotations:
+        message:  群集已过度提交命名空间的CPU资源请求.
+        summary:  Cluster has overcommitted CPU resource requests for Namespaces.
+      expr: |
+        sum(kube_resourcequota{k8s_cluster_id="",job="kube-state-metrics", type="hard", resource="cpu"})
+                 /
+        sum(kube_node_status_allocatable_cpu_cores{k8s_cluster_id="",job="kube-state-metrics"})
+                 > 1.5
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: KubeCPUOvercommit
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: kubernetes
+        rule_type: '1'
+
+
+    - alert: PersistentVolumeClaimErrors
+      annotations:
+        message:  The PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} 持续5分钟处于{{ $labels.phase }}的状态.
+        summary:  The persistent volume claim {{ $labels.namespace }} / {{ $labels.persistentvolumeclaim }} has status {{ $labels.phase }}.
+      expr: |
+        kube_persistentvolumeclaim_status_phase{k8s_cluster_id="",phase=~"Failed|Pending",job="kube-state-metrics"} > 0
+      for: 5m
+      labels:
+        severity: warning
+        crd_rule_name: PersistentVolumeClaimErrors
+        resource_type: platform
+        custom_rule_type: P
+        resource_instance: persistentvolumeclaim
+        rule_type: '1'
+
+  - name: default.physical
+    rules:
+      - alert: ServerUnavailable
+        annotations:
+          message: 服务器{{$labels.host_name}} {{$labels.manageIp}}当前处于不可用状态.
+          summary: The Server {{$labels.host_name}} {{$labels.manageIp}} Unavailable.
+        expr: |
+          up{k8s_cluster_id="",job="physical"} ==0
+        for: 5m
+        labels:
+          severity: emergency
+        crd_rule_name: ServerUnavailable
+        resource_type: physical_machine
+        custom_rule_type: P
+        resource_instance: persistentvolumeclaim
+        rule_type: '1'
