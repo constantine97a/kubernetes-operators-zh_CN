@@ -427,8 +427,8 @@ groups:
         for: 5m
         labels:
           severity: emergency
-        crd_rule_name: ServerUnavailable
-        resource_type: physical_machine
-        custom_rule_type: P
-        resource_instance: persistentvolumeclaim
-        rule_type: '1'
+          crd_rule_name: ServerUnavailable
+          resource_type: physical_machine
+          custom_rule_type: P
+          resource_instance: persistentvolumeclaim
+          rule_type: '1'
