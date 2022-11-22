@@ -3,7 +3,7 @@ groups:
     rules:
       - record: kubevirt_virt_api_up_total
         expr: |
-          sum(up{namespace='kubevirt', pod=~'virt-api-.*'}) or vector(0)
+          sum(up{job_namespace='kubevirt', pod=~'virt-api-.*'}) or vector(0)
 
       - alert: VirtAPIDown
         annotations:
@@ -114,7 +114,7 @@ groups:
 
       - record: kubevirt_virt_operator_up_total
         expr: |
-          sum(up{namespace='kubevirt', pod=~'virt-operator-.*'}) or vector(0)
+          sum(up{job_namespace='kubevirt', pod=~'virt-operator-.*'}) or vector(0)
 
       - alert: VirtOperatorDown
         annotations:
@@ -205,7 +205,7 @@ groups:
           message: 一些virt-handlers无法成功部署.
           summary: Some virt-handlers failed to roll out.
         expr: |
-          (kube_daemonset_status_number_ready{namespace='kubevirt', daemonset='virt-handler'} - kube_daemonset_status_desired_number_scheduled{namespace='kubevirt', daemonset='virt-handler'})!=0
+          (kube_daemonset_status_number_ready{job_namespace='kubevirt', daemonset='virt-handler'} - kube_daemonset_status_desired_number_scheduled{job_namespace='kubevirt', daemonset='virt-handler'})!=0
         for: 15m
         labels:
           severity: WARNING
