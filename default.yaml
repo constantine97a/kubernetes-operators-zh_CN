@@ -1,5 +1,5 @@
 groups:
-  - name: openstack.nova
+  - name: mec.default
     rules:
       - alert: NovaDown
         expr: os_nova_agent_state == 0
@@ -13,8 +13,6 @@ groups:
           category: event
           obj_type: node
 
-  - name: openstack.cinder
-    rules:
       - alert: CinderDown
         expr: os_cinder_agent_state == 0
         for: 1m
@@ -27,8 +25,6 @@ groups:
           category: event
           obj_type: node
 
-  - name: openstack.neutron
-    rules:
       - alert: NeutronDown
         expr: os_nova_agent_state == 0
         for: 1m
@@ -41,8 +37,6 @@ groups:
           category: event
           obj_type: node
 
-  - name: vm.rules
-    rules:
       # openstack cpu usage p1
       - alert: OSCPUUsage
         expr: irate(os_libvirt_cpu_time{}[5m])/((1e+9)*os_libvirt_cpu_virtual_num{})*100 > 90
@@ -138,8 +132,6 @@ groups:
           obj_type: vm
 
 
-  - name: physical.node.rules
-    rules:
       - alert: PhysicalNodeCpuUsage
         expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance))) *100 > 90
         for: 5m
@@ -212,8 +204,6 @@ groups:
           category: capability
           obj_type: node
 
-  - name: k8s.pod.rules   # 容器组
-    rules:
       # Pod处于non-ready状态超过5分钟
       - alert: PodNotReady
         expr: kube_pod_status_phase{phase=~"Unknown|Failed"} > 0
@@ -335,8 +325,6 @@ groups:
           alert_object: '{{ $labels.name }}'
 
 
-  - name: k8s.workload.rules  # 工作负载
-    rules:
       # Deployment 部署失败
       - alert: KubernetesDeploymentGenerationMismatch
         expr: kube_deployment_status_observed_generation != kube_deployment_metadata_generation
@@ -391,8 +379,6 @@ groups:
           description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的StatefulSet{{ $labels.statefulset }}部署失败，生成的资源与定义的资源不匹配 "
           alert_object: '{{ $labels.statefulset }}'
 
-  - name: k8s.cluster.rules # k8s集群
-    rules:
       # Node处于NotReady状态超过5分钟
       - alert: KubernetesNodeNotReady
         expr: kube_node_status_condition{condition="Ready",status="true"} == 0
@@ -547,8 +533,6 @@ groups:
           obj_type: k8s
 
 
-  - name: PVC  # PVC
-    rules:
       # Persistent Volume Claim持久化存储申明状态为Failed|Pending
       - alert: PersistentVolumeClaimErrors
         expr: |
@@ -564,8 +548,6 @@ groups:
           obj_type: pvc
 
 
-  - name: devices.probe.rules
-    rules:
       # 设备探测：离线
       - alert: DeviceProbeOffLine
         expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name)) ==100
@@ -623,8 +605,6 @@ groups:
           obj_type: device_probe
           protocol: icmp
 
-  - name: service.probe.rules
-    rules:
       # 服务探测：离线
       - alert: ServiceProbeOffLine
         expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{job="probe-icmp",probe_type='serviceprobe'}) by  (uuid,job_name)) ==100
@@ -784,8 +764,6 @@ groups:
           obj_type: service_probe
 
 
-  - name: net.probe.rules
-    rules:
       # 网络探测：离线
       - alert: NetProbeOffLine
         expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{job="probe-icmp",probe_type='netprobe'}) by  (uuid,job_name)) ==100
