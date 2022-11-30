@@ -343,7 +343,7 @@ groups:
         expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
         for: 2m
         annotations:
-          summary: 【p1】deployment generation mismatch
+          summary: deployment generation mismatch
           description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.deployment }} 副本数未达到预期。'
           metric_value: '{{ $value }}'
           alert_object: "{{ $labels.deployment }}"
@@ -554,9 +554,9 @@ groups:
         for: 5m
         annotations:
           summary: "DeviceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is {{ $value }}%."
-          description: 'ICMP设备探测{{ $labels.uuid }}/{{ $labels.job_name }}的丢包率为{{ $value }}%,设备离线 '
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的探测任务({{$labels.uuid}})连续三次探测丢包率为{{ $value }}%,设备离线'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -568,9 +568,9 @@ groups:
         for: 5m
         annotations:
           summary: "ICMP DeviceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is Larger Than 5%."
-          description: 'ICMP设备探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的丢包率{{ $value }}%>5%'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的探测任务({{$labels.uuid}})连续三次探测丢包率丢包率为{{$value}}%>5%,当前值{{$value}}'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -578,13 +578,13 @@ groups:
           protocol: icmp
 
       - alert: DeviceProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='deviceprobe'}) by (uuid,job_name) / sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name) >200
+        expr: 1000  *sum(probe_icmp_func_duration{probe_type='deviceprobe'}) by (uuid,job_name) / sum(probe_icmp_result_count{probe_type='deviceprobe'}) by (uuid,job_name) >200
         for: 5m
         annotations:
           summary: "DeviceProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: 'ICMP设备探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的RTT超过阈值200ms，平均RTT{{ $value }}'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的探测任务({{$labels.uuid}})的连续三次探测RTT超过阈值200ms,平均RTT{{ $value }}'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -596,9 +596,9 @@ groups:
         for: 5m
         annotations:
           summary: "DeviceProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: 'ICMP设备探测任务{{ $labels.uuid }}/{{$label.job_name }}执行失败,结果未知'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的探测任务({{$labels.uuid}})执行失败,结果未知'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -607,13 +607,13 @@ groups:
 
       # 服务探测：离线
       - alert: ServiceProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name)) ==100
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name)) >99
         for: 5m
         annotations:
           summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is {{ $value }}%,Service OffLine"
-          description: 'ICMP服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的丢包率{{ $value }}%,服务离线'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的ICMP探测任务({{$labels.uuid}})的丢包率{{$value}}%,服务离线'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -625,9 +625,9 @@ groups:
         for: 5m
         annotations:
           summary: "TCP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Failed,Service OffLine."
-          description: 'TCP 服务探测{{ $labels.uuid }}{{ $labels.job_name }}失败{{ $value }}%,服务离线'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的TCP探测任务({{$labels.uuid}})失败,服务离线'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -639,10 +639,10 @@ groups:
         expr: probe_http_func_success==0
         for: 5m
         annotations:
-          summary: "HTTP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is 100%."
-          description: 'HTTP {{ $labels.uuid }}/{{ $labels.job_name }}的服务探测任务失败，服务离线'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          summary: "HTTP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Failed,Service OffLine."
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的HTTP探测任务({{$labels.uuid}})失败,服务离线'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -654,9 +654,9 @@ groups:
         for: 5m
         annotations:
           summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is Larger Than 5%."
-          description: 'ICMP 服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}丢包率超过阈值，丢包率{{ $value }}%大于阈值5%'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的ICMP探测任务({{$labels.uuid}})丢包率超过阈值，丢包率{{$value}}%大于阈值5%，当前值{{$value}}%'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -667,10 +667,10 @@ groups:
         expr: 1000*sum(probe_icmp_func_duration{probe_type='serviceprobe'}) by (uuid,job_name) / sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name) >200
         for: 5m
         annotations:
-          summary: "ICMP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{ $value }} is Larger Than 200ms."
-          description: 'ICMP服务探测{{ $labels.uuid }}/{{ $labels.job_name }}的RTT超过阈值200ms，平均RTT{{ $value }}ms大于阈值200ms'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          summary: "ICMP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{$value}} is Larger Than 200ms."
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的ICMP服务探测任务({{$labels.uuid}})RTT超过阈值200ms，当前值{{$value}}ms'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -682,9 +682,9 @@ groups:
         for: 5m
         annotations:
           summary: "TCP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{ $value }} is Larger Than 200ms."
-          description: 'TCP 服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的服务探测RTT超过阈值 200ms，平均 RTT{{ $value }} ms'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的TCP服务探测任务({{$labels.uuid}})RTT超过阈值200ms，当前值{{$value}}ms'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -697,9 +697,9 @@ groups:
         for: 5m
         annotations:
           summary: "HTTP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: 'HTTP服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的RTT超过阈值200ms，平均RTT{{ $value }} '
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的HTTP服务探测任务({{$labels.uuid}})RTT超过阈值200ms，当前值{{$value}}ms'
           metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -712,8 +712,8 @@ groups:
         for: 5m
         annotations:
           summary: "ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} StatusCode MisMatched."
-          description: '{{ $labels.uuid }} {{ $labels.job_name }}返回状态码不匹配'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的HTTP服务探测任务失败，HTTP Code码不匹配'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -725,9 +725,9 @@ groups:
         for: 5m
         annotations:
           summary: "ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Response MisMatch."
-          description: 'HTTP/HTTPS服务探测{{ $labels.uuid }}/{{ $labels.job_name }}响应内容不匹配'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的HTTP服务探测任务失败，响应内容不匹配'
           metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -740,9 +740,9 @@ groups:
         for: 5m
         annotations:
           summary: "HTTP/HTTPS ServiceProbe Job {{ $labels.uuid }}/{{ $labels.job_name }} Authorization Failed, Status Code {{$value}}."
-          description: 'HTTP/HTTPS 服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}用户认证失败,状态码:{{$value}}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})的HTTP服务探测用户认证失败,状态码:{{$value}}'
           metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -755,9 +755,9 @@ groups:
         for: 5m
         annotations:
           summary: "Service Probe Job {{$labels.uuid}}/{{$labels.job_name}} Failed."
-          description: '服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}执行失败'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})服务探测任务({{$labels.uuid}})执行失败'
           metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -766,13 +766,13 @@ groups:
 
       # 网络探测：离线
       - alert: NetProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{job="probe-icmp",probe_type='netprobe'}) by  (uuid,job_name)) ==100
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe'}) by  (uuid,job_name)) ==100
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is 100%."
-          description: '网络探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的丢包率{{ $value }}%'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})探测任务({{$labels.uuid}})连续三次探测丢包率为{{$value}}%，目标离线'
           metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -784,9 +784,9 @@ groups:
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{ $labels.job_name }} Packet Loss Rate is Larger Than 5%."
-          description: '探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的设备探测任务丢包率超过阈值，丢包率{{ $value }}%'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})探测任务({{$labels.uuid}})丢包率超过阈值5%，丢包率{{$value}}%'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -798,9 +798,9 @@ groups:
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: '{{ $labels.uuid }}/{{ $labels.job_name }}的设备探测RTT超过阈值 200ms，平均RTT{{ $value }}'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})探测任务({{$labels.uuid}})的RTT超过阈值 200ms，平均RTT{{$value}}'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
@@ -812,9 +812,9 @@ groups:
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: '{{ $labels.uuid }}{{$label.job_name }}的设备探测任务执行失败'
-          metric_value: '{{ $value }}'
-          alert_object: '{{ $labels.uuid }}'
+          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.targets}})探测任务({{$labels.uuid}})探测任务执行失败,探测结果未知'
+          metric_value: '{{$value}}'
+          alert_object: '{{$labels.extra_name}}'
         labels:
           level: p1
           category: event
