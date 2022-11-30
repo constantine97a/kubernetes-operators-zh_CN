@@ -596,7 +596,7 @@ groups:
         for: 5m
         annotations:
           summary: "DeviceProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: 'ICMP设备探测任务{{ $labels.uuid }}/{{label.job_name }}执行失败,结果未知'
+          description: 'ICMP设备探测任务{{ $labels.uuid }}/{{$label.job_name }}执行失败,结果未知'
           metric_value: '{{ $value }}'
           alert_object: '{{ $labels.uuid }}'
         labels:
@@ -607,11 +607,11 @@ groups:
 
       # 服务探测：离线
       - alert: ServiceProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{job="probe-icmp",probe_type='serviceprobe'}) by  (uuid,job_name)) ==100
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name)) ==100
         for: 5m
         annotations:
           summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is {{ $value }}%,Service OffLine"
-          description: 'ICMP服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的丢包率{{ $value }}%，服务离线'
+          description: 'ICMP服务探测任务{{ $labels.uuid }}/{{ $labels.job_name }}的丢包率{{ $value }}%,服务离线'
           metric_value: '{{ $value }}'
           alert_object: '{{ $labels.uuid }}'
         labels:
@@ -812,7 +812,7 @@ groups:
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: '{{ $labels.uuid }}{{label.job_name }}的设备探测任务执行失败'
+          description: '{{ $labels.uuid }}{{$label.job_name }}的设备探测任务执行失败'
           metric_value: '{{ $value }}'
           alert_object: '{{ $labels.uuid }}'
         labels:
