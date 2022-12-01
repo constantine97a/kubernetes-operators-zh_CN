@@ -851,7 +851,7 @@ groups:
           protocol: icmp
 
       - alert: NetProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
+        expr: 1000 *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
