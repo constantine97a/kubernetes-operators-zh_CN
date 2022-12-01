@@ -550,7 +550,7 @@ groups:
 
       # 设备探测：离线
       - alert: DeviceProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name)) ==100
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name,target,extra_type,extra_description)) ==100
         for: 5m
         annotations:
           summary: "DeviceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is {{ $value }}%."
@@ -564,7 +564,7 @@ groups:
           protocol: icmp
 
       - alert: DeviceProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name)) >5
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
         for: 5m
         annotations:
           summary: "ICMP DeviceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is Larger Than 5%."
@@ -578,7 +578,7 @@ groups:
           protocol: icmp
 
       - alert: DeviceProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='deviceprobe'}) by (uuid,job_name,target) / sum(probe_icmp_result_count{probe_type='deviceprobe'}) by (uuid,job_name) >200
+        expr: 1000  *sum(probe_icmp_func_duration{probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "DeviceProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
@@ -607,7 +607,7 @@ groups:
 
       # 服务探测：离线
       - alert: ServiceProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name)) >99
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >99
         for: 5m
         annotations:
           summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is {{ $value }}%,Service OffLine"
@@ -650,7 +650,7 @@ groups:
           protocol: http(s)
 
       - alert: ServiceProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name)) >5
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
         for: 5m
         annotations:
           summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is Larger Than 5%."
@@ -664,7 +664,7 @@ groups:
           protocol: icmp
 
       - alert: SeviceProbeDelay
-        expr: 1000*sum(probe_icmp_func_duration{probe_type='serviceprobe'}) by (uuid,job_name,target) / sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name) >200
+        expr: 1000*sum(probe_icmp_func_duration{probe_type='serviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "ICMP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{$value}} is Larger Than 200ms."
@@ -678,7 +678,7 @@ groups:
           protocol: icmp
 
       - alert: SeviceProbeDelay
-        expr: 1000 * sum(probe_tcp_func_duration) by (uuid,job_name,target) >200
+        expr: 1000 * sum(probe_tcp_func_duration) by (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "TCP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{ $value }} is Larger Than 200ms."
@@ -693,7 +693,7 @@ groups:
 
 
       - alert: SeviceProbeDelay
-        expr: 1000  * sum(probe_http_func_duration) by (uuid,job_name,target) >200
+        expr: 1000  * sum(probe_http_func_duration) by (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "HTTP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
@@ -766,7 +766,7 @@ groups:
 
       # 网络探测：离线
       - alert: NetProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name)) ==100
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) ==100
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is 100%."
@@ -780,7 +780,7 @@ groups:
           protocol: icmp
 
       - alert: NetProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name)) >5
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{ $labels.job_name }} Packet Loss Rate is Larger Than 5%."
@@ -794,7 +794,7 @@ groups:
           protocol: icmp
 
       - alert: NetProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name) >200
+        expr: 1000  *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
@@ -823,7 +823,7 @@ groups:
 
       # 5GC_IP网络探测：离线
       - alert: NetProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name)) ==100
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) ==100
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is 100%."
@@ -837,7 +837,7 @@ groups:
           protocol: icmp
 
       - alert: NetProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name)) >5
+        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{ $labels.job_name }} Packet Loss Rate is Larger Than 5%."
@@ -851,7 +851,7 @@ groups:
           protocol: icmp
 
       - alert: NetProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name) >200
+        expr: 1000  *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
         for: 5m
         annotations:
           summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
