@@ -42,7 +42,7 @@ groups:
         expr: irate(os_libvirt_cpu_time{}[5m])/((1e+9)*os_libvirt_cpu_virtual_num{})*100 > 90
         for: 5m
         annotations:
-          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.hypervisor_hostname }})持续5分钟CPU使用率大于90%，当前值{{ $value }}"
+          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟CPU使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
           summary: "CPU当前使用率: {{ $value }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
@@ -55,7 +55,7 @@ groups:
         expr: irate(os_libvirt_cpu_time{}[5m])/((1e+9)*os_libvirt_cpu_virtual_num{})*100 > 80
         for: 5m
         annotations:
-          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.hypervisor_hostname }})持续5分钟CPU使用率大于80%，当前值{{ $value }}"
+          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟CPU使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
           summary: "CPU当前使用率: {{ $value }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
@@ -65,10 +65,10 @@ groups:
 
       # openstack memory usage p1
       - alert: OSMemUsage
-        expr: (os_libvirt_mem_used/os_libvirt_mem_total)*100 > 90
+        expr: (1-os_libvirt_mem_available/os_libvirt_mem_total)*100 > 90
         for: 5m
         annotations:
-          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.hypervisor_hostname }})持续5分钟内存使用率大于90%，当前值{{ $value }}"
+          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟内存使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
           summary: "内存当前使用率: {{ $value }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
@@ -78,10 +78,10 @@ groups:
 
       #  openstack memory usage p2
       - alert: OSMemUsage
-        expr: (os_libvirt_mem_used/os_libvirt_mem_total)*100 > 80
+        expr: (1-os_libvirt_mem_available/os_libvirt_mem_total)*100 > 80
         for: 5m
         annotations:
-          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.hypervisor_hostname }})持续5分钟内存使用率大于80%，当前值{{ $value }}"
+          description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟内存使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
           summary: "内存当前使用率: {{ $value }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
@@ -92,7 +92,7 @@ groups:
       # 云主机故障
       - alert: VMStatusError
         annotations:
-          description: "{{ $labels.name }}({{ reReplaceAll \":(.*)\" \"\" $labels.hypervisor_hostname }})云主机故障"
+          description: "{{ $labels.name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})云主机故障"
           summary: "云主机故障: {{ $labels.name }}"
           alert_object: '{{ $labels.name }}'
         expr: |
@@ -131,13 +131,12 @@ groups:
           category: event
           obj_type: vm
 
-
       - alert: PhysicalNodeCpuUsage
-        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance))) *100 > 90
+        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id))) *100 > 90
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟CPU使用率大于90%，当前值{{ $value }}"
-          summary: "CPU当前使用率: {{ $value }}"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟CPU使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: "CPU当前使用率: {{ $value | printf \"%.2f\" }}%"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p1
@@ -145,11 +144,11 @@ groups:
           obj_type: node
 
       - alert: PhysicalNodeCpuUsage
-        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance))) *100 > 80
+        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id))) *100 > 80
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟CPU使用率大于80%，当前值{{ $value }}"
-          summary: "CPU当前使用率: {{ $value }}"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟CPU使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: "CPU当前使用率: {{ $value | printf \"%.2f\" }}%"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p2
@@ -160,8 +159,8 @@ groups:
         expr: 100 - ((node_memory_MemAvailable_bytes{job="node-exporter"} * 100) / node_memory_MemTotal_bytes{job="node-exporter"}) > 90
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于90%，当前值{{ $value }}"
-          summary: "内存当前使用率: {{ $value }}"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: "内存当前使用率: {{ $value | printf \"%.2f\" }}%"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p1
@@ -172,8 +171,8 @@ groups:
         expr: 100 - ((node_memory_MemAvailable_bytes{job="node-exporter"} * 100) / node_memory_MemTotal_bytes{job="node-exporter"}) > 80
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于80%，当前值{{ $value }}"
-          summary: "内存当前使用率: {{ $value }}"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: "内存当前使用率: {{ $value | printf \"%.2f\" }}%"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p2
@@ -184,8 +183,8 @@ groups:
         expr: 100 - ((node_filesystem_avail_bytes{device=~'.*vd.*',job="node-exporter"} * 100) / node_filesystem_size_bytes{device=~'.*vd.*',job="node-exporter"}) > 90
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于90%，当前值{{ $value }}"
-          summary: "磁盘目录{{ $labels.mountpoint }} 使用当前率: {{ $value }}"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: "磁盘目录{{ $labels.mountpoint }} 使用当前率: {{ $value | printf \"%.2f\" }}%"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p1
@@ -196,22 +195,20 @@ groups:
         expr: 100 - ((node_filesystem_avail_bytes{device=~'.*vd.*',job="node-exporter"} * 100) / node_filesystem_size_bytes{device=~'.*vd.*',job="node-exporter"}) > 80
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于80%，当前值{{ $value }}"
-          summary: "磁盘目录{{ $labels.mountpoint }}使用当前率: {{ $value }}"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: "磁盘目录{{ $labels.mountpoint }}使用当前率:{{ $value | printf \"%.2f\" }}%"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p2
           category: capability
           obj_type: node
-
       # Pod处于non-ready状态超过5分钟
       - alert: PodNotReady
         expr: kube_pod_status_phase{phase=~"Unknown|Failed"} > 0
         for: 5m
         annotations:
           summary: 【p1】pod not ready
-          description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的POD {{ $labels.pod }}处于Unknown|Failed状态'
-          metric_value: '{{ $value }}'
+          description: '{{ $labels.namespace }}的POD {{ $labels.pod }}处于Unknown|Failed状态'
           alert_object: '{{ $labels.pod }}'
         labels:
           level: p1
@@ -224,7 +221,7 @@ groups:
         for: 5m
         annotations:
           summary: 【p1】pod is pending
-          description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的POD {{ $labels.pod }}在5分钟内持续处于Pending状态'
+          description: '{{ $labels.namespace }}的POD {{ $labels.pod }}在5分钟内持续处于Pending状态'
           alert_object: '{{ $labels.pod }}'
         labels:
           level: p1
@@ -238,7 +235,7 @@ groups:
         for: 5m
         annotations:
           summary: 【p1】pod crash looping
-          description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.pod }}在5分钟内有重启'
+          description: '{{ $labels.namespace }}的{{ $labels.pod }}在5分钟内有重启'
           alert_object: '{{ $labels.pod }}'
         labels:
           level: p1
@@ -251,7 +248,7 @@ groups:
         for: 5m
         annotations:
           summary: 【p1】pod container terminated
-          description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.pod }} ({{ $labels.container }})5分钟内处于Terminated状态'
+          description: '{{ $labels.namespace }}的{{ $labels.pod }} ({{ $labels.container }})5分钟内处于Terminated状态'
           alert_object: '{{ $labels.container }}'
         labels:
           level: p1
@@ -262,7 +259,7 @@ groups:
       - alert: PodContainerNotReady
         annotations:
           summary: 【p1】pod container not ready
-          description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.pod }} Container ({{ $labels.container }})5分钟内处于NotReady状态'
+          description: '命名空间{{ $labels.namespace }}的{{ $labels.pod }} Container ({{ $labels.container }})5分钟内处于NotReady状态'
           alert_object: '{{ $labels.container }}'
         expr: kube_pod_container_status_ready == 0
         for: 5m
@@ -273,7 +270,9 @@ groups:
 
       #容器持续5分钟CPU使用率大于80%
       - alert: ContainerCpuUsage
-        expr: (sum(rate(container_cpu_usage_seconds_total{name!=""}[3m])) BY (area_name,node_name,namespace,instance,name) * 100) > 80
+        expr: |
+          sum(irate(container_cpu_usage_seconds_total{container =~'.*',container !='',container!='POD'}[5m])) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id) 
+          / (sum(container_spec_cpu_quota{container =~'.*',container !='',container!='POD'}/100000) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id)) *100 > 80
         for: 5m
         labels:
           level: p2
@@ -281,13 +280,15 @@ groups:
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟CPU使用率大于80%，当前值{{ $value }}"
-          metric_value: '{{ $value }}'
+          description: "命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟CPU使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟CPU使用率大于90%
       - alert: ContainerCpuUsage
-        expr: (sum(rate(container_cpu_usage_seconds_total{name!=""}[3m])) BY (area_name,node_name,namespace,instance,name) * 100) > 90
+        expr: |
+          sum(irate(container_cpu_usage_seconds_total{container =~'.*',container !='',container!='POD'}[5m])) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id) 
+          / 
+          (sum(container_spec_cpu_quota{container =~'.*',container !='',container!='POD'}/100000) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id)) *100 > 90
         for: 5m
         labels:
           level: p1
@@ -295,25 +296,29 @@ groups:
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟CPU使用率大于90%，当前值{{ $value }}"
+          description: "命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟CPU使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟内存使用率大于80%
       - alert: ContainerMemoryUsage
-        expr: (sum(container_memory_working_set_bytes{name!=""}) BY (instance, name) / sum(container_spec_memory_limit_bytes > 0) BY (instance, name) * 100) > 80
+        expr: |
+          (sum(container_memory_working_set_bytes{name!=""}) BY (area_name,area_code,node_name,namespace,instance, name,vim_id) 
+          / sum(container_spec_memory_limit_bytes > 0) BY (area_name,area_code,node_name,namespace,instance,name,vim_id) * 100) > 80
         for: 5m
         labels:
           level: p2
           category: capability
           obj_type: pod
         annotations:
-          summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟内存使用率大于90%，当前值{{ $value }}"
+          summary: Container CPU usage (instance {{ $labels.name }})
+          description: "命名空间{{ $labels.namespace }}的容器{{ $labels.name }}持续5分钟内存使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟内存使用率大于90%
       - alert: ContainerMemoryUsage
-        expr: (sum(container_memory_working_set_bytes{name!=""}) BY (instance, name) / sum(container_spec_memory_limit_bytes > 0) BY (instance, name) * 100) > 90
+        expr: |
+          (sum(container_memory_working_set_bytes{name!=""}) BY (area_name,area_code,node_name,namespace,instance,name,vim_id) 
+            / sum(container_spec_memory_limit_bytes > 0) BY (area_name,area_code,node_name,namespace,instance, name,vim_id) * 100) > 90
         for: 5m
         labels:
           level: p1
@@ -321,7 +326,7 @@ groups:
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟内存使用率大于90%，当前值{{ $value }}"
+          description: "命名空间{{ $labels.namespace }}的容器{{ $labels.name }}持续5分钟内存使用率大于90%，当前值{{ $value  | printf \"%.2f\" }}%"
           alert_object: '{{ $labels.name }}'
 
 
@@ -335,7 +340,7 @@ groups:
           obj_type: workload
         annotations:
           summary: A Deployment has failed but has not been rolled back.
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.deployment }} 未能成功部署"
+          description: "命名空间{{ $labels.namespace }}的Deployment{{ $labels.deployment }} 未能成功部署"
           alert_object: "{{ $labels.deployment }}"
 
         # Deployment副本数未达到预期超过2分钟
@@ -343,9 +348,8 @@ groups:
         expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
         for: 2m
         annotations:
-          summary: deployment generation mismatch
-          description: '{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.deployment }} 副本数未达到预期。'
-          metric_value: '{{ $value }}'
+          summary: 【p1】deployment generation mismatch
+          description: '命名空间{{ $labels.namespace }}的{{ $labels.deployment }} 副本数未达到预期。'
           alert_object: "{{ $labels.deployment }}"
         labels:
           level: p2
@@ -363,7 +367,7 @@ groups:
           obj_type: workload
         annotations:
           summary: "Kubernetes StatefulSet generation mismatch (statefulset {{ $labels.statefulset }})"
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的{{ $labels.statefulset }} 未能成功部署"
+          description: "命名空间{{ $labels.namespace }}的StatefulSet{{ $labels.statefulset }} 未能成功部署"
           alert_object: '{{ $labels.statefulset }}'
 
         #  StatefulSet，生成的资源与定义的资源不匹配
@@ -376,7 +380,7 @@ groups:
           obj_type: workload
         annotations:
           summary: "A StatefulSet went down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的StatefulSet{{ $labels.statefulset }}部署失败，生成的资源与定义的资源不匹配 "
+          description: "命名空间{{ $labels.namespace }}的StatefulSet{{ $labels.statefulset }}部署失败，生成的资源与定义的资源不匹配 "
           alert_object: '{{ $labels.statefulset }}'
 
       # Node处于NotReady状态超过5分钟
@@ -389,25 +393,25 @@ groups:
           obj_type: k8s
         annotations:
           summary: Kubernetes Node ready (instance {{ $labels.node }})
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的Kubernetes Node{{ $labels.node }} 处于NotReady状态超过5分钟"
+          description: "Kubernetes节点{{$labels.instance}}/{{ $labels.node }} 处于NotReady状态超过5分钟"
           alert_object: '{{ $labels.node }}'
 
       # etcd服务
       - alert: EtcdDown
         expr: |
-          absent(up{job="kubernetes-etcd"} == 1)
+          up{job=~".*etcd.*"} == 0
         for: 5m
         annotations:
           summary: Etcd Has Disappeared From Prometheus Target Discovery
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的Etcd服务异常超过5分钟"
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上的Etcd服务异常超过5分钟"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         labels:
           level: p1
           category: event
           obj_type: k8s
 
       # CoreDNS服务异常超过1分钟
-      - alert: CoreDNSRequestFaild
+      - alert: CoreDNSRequestFailed
         expr: irate(coredns_dns_response_rcode_count_total{rcode=~"REFUSE"}[1m])>0
         for: 1m
         labels:
@@ -415,13 +419,13 @@ groups:
           category: event
           obj_type: k8s
         annotations:
-          summary: "CoreDns {{ $labels.namespace }}/{{ $labels.pod }} response code REFUSE, coreDNS request fail!"
-          description: "{{ $labels.area_name }}{{ $labels.node_name }}{{ $labels.namespace }}的CoreDNS服务异常超过1分钟"
-          alert_object: '{{ $labels.instance }}'
+          summary: "CoreDns response code REFUSE, coreDNS request fail!"
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}的CoreDNS服务异常超过1分钟."
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
 
       #ControllerManager宕机
       - alert: K8SControllerManagerDown
-        expr: up{job="kubernetes-controller-manager"} == 0
+        expr: up{job=~"kube.*-controller-manager"} == 0
         for: 3m
         labels:
           level: p1
@@ -429,12 +433,12 @@ groups:
           obj_type: k8s
         annotations:
           summary: Kube Controller Manager Down
-          description: '{{ $labels.area_name }} {{ $labels.node_name }}{{ $labels.instance }} ControllerManager宕机，deployment和replicationControllers无法工作.'
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}的ControllerManager宕机."
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
 
         # Kubelet 宕机
       - alert: K8sKubeletDown
-        expr: up{job="kubernetes-kubelet"} == 0
+        expr: up{job=~".*kubelet"} == 0
         for: 3m
         labels:
           level: p1
@@ -442,16 +446,16 @@ groups:
           obj_type: k8s
         annotations:
           summary: Kube Kubelet Down
-          description: '{{ $labels.area_name }} {{ $labels.node_name }} {{ $labels.node}} 上的Kubelet宕机'
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}的上的Kubelet宕机"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
 
       #KubeScheduler 宕机
       - alert: KubeSchedulerDown
         annotations:
           summary: Kube Scheduler Down
-          description: '{{ $labels.area_name }} {{ $labels.node_name }} {{ $labels.instance}} 的KubeScheduler宕机'
-          alert_object: '{{ $labels.instance }}'
-        expr: up{job="kubernetes-scheduler"} == 0
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}的KubeScheduler宕机."
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
+        expr: up{job=~"kube.*scheduler"}==0
         for: 3m
         labels:
           level: p1
@@ -463,9 +467,9 @@ groups:
       - alert: KubeApiServerDown
         annotations:
           summary: Kube Api Server Down
-          description: '{{ $labels.area_name }} {{ $labels.node_name }} {{ $labels.instance}} 上Apiserver宕机或不存在'
-          alert_object: '{{ $labels.instance }}'
-        expr: up{job="kubernetes-apiservers"} == 0
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上Apiserver宕机"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
+        expr: up{job=~".*apiserver.*"} == 0
         for: 3m
         labels:
           level: p1
@@ -476,8 +480,8 @@ groups:
       - alert: KubeletCertificateExpirationIn7Days
         annotations:
           summary: Kubelet Certificate Expiration In 7 Days
-          description: "{{ $labels.area_name }} {{ $labels.node_name }} {{ $labels.instance}}的kubelet客户端证书将在7天后过期"
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上的的kubelet客户端证书将在7天后过期"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         expr: |
           apiserver_client_certificate_expiration_seconds_count{job="kubernetes-kubelet"} > 0 and histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubernetes-kubelet"}[5m]))) < 604800
         for: 5m
@@ -490,8 +494,8 @@ groups:
       - alert: KubeletCertificateExpirationIn30Days
         annotations:
           summary: Kubelet Certificate Expiration In 30 Days
-          description: "{{ $labels.area_name }} {{ $labels.node_name }}{{ $labels.instance}}的kubelet客户端证书将在30天后过期"
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上的kubelet客户端证书将在30天后过期"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         expr: |
           apiserver_client_certificate_expiration_seconds_count{job="kubernetes-kubelet"} > 0 and histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubernetes-kubelet"}[5m]))) < 2592000
         for: 5m
@@ -509,8 +513,8 @@ groups:
         for: 2m
         annotations:
           summary: Cluster has overcommitted CPU resource requests for Namespaces
-          description: "{{ $labels.area_name }} {{ $labels.node_name }}{{ $labels.instance}} 集群当前请求CPU超出配额1.5倍，持续2分钟"
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }} 集群当前请求CPU超出配额1.5倍，持续2分钟"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         labels:
           level: p1
           category: event
@@ -525,13 +529,12 @@ groups:
         for: 2m
         annotations:
           summary: Cluster has overcommitted memory resource requests for Namespaces
-          description: "{{ $labels.area_name }} {{ $labels.node_name }}{{ $labels.instance}}的集群当前请求内存超出配额1.5倍，持续2分钟"
-          alert_object: '{{ $labels.instance }}'
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}的集群当前请求内存超出配额1.5倍，持续2分钟"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         labels:
           level: p1
           category: event
           obj_type: k8s
-
 
       # Persistent Volume Claim持久化存储申明状态为Failed|Pending
       - alert: PersistentVolumeClaimErrors
@@ -540,341 +543,10 @@ groups:
         for: 5m
         annotations:
           summary: "{{ $labels.persistentvolume }} has status {{ $labels.phase }}."
-          description: "{{ $labels.area_name }} {{ $labels.node_name }}{{ $labels.instance}} 集群的Persistent Volume Claim {{ $labels.persistentvolume }}持久化存储申明状态为Failed|Pending"
+          description: "{{ $labels.instance}} 集群的Persistent Volume Claim {{ $labels.persistentvolume }}持久化存储申明状态为Failed|Pending"
           alert_object: '{{ $labels.persistentvolume }}'
         labels:
           level: p1
           category: event
           obj_type: pvc
 
-
-      # 设备探测：离线
-      - alert: DeviceProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name,target,extra_type,extra_description)) ==100
-        for: 5m
-        annotations:
-          summary: "DeviceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is {{ $value }}%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的探测任务({{$labels.uuid}})连续三次探测丢包率为{{ $value }}%,设备离线'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: device_probe
-          protocol: icmp
-
-      - alert: DeviceProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='deviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
-        for: 5m
-        annotations:
-          summary: "ICMP DeviceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is Larger Than 5%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的探测任务({{$labels.uuid}})连续三次探测丢包率丢包率为{{$value}}%>5%,当前值{{$value}}'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: device_probe
-          protocol: icmp
-
-      - alert: DeviceProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='deviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) >200
-        for: 5m
-        annotations:
-          summary: "DeviceProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的探测任务({{$labels.uuid}})的连续三次探测RTT超过阈值200ms,平均RTT{{ $value }}'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: device_probe
-          protocol: icmp
-
-      - alert: DeviceProbeUnknown
-        expr: probe_icmp_func_success{probe_type='deviceprobe'}!=1
-        for: 5m
-        annotations:
-          summary: "DeviceProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的探测任务({{$labels.uuid}})执行失败,结果未知'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: device_probe
-          protocol: icmp
-
-      # 服务探测：离线
-      - alert: ServiceProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >99
-        for: 5m
-        annotations:
-          summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is {{ $value }}%,Service OffLine"
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的ICMP探测任务({{$labels.uuid}})的丢包率{{$value}}%,服务离线'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: icmp
-
-      - alert: ServiceProbeOffLine
-        expr: probe_tcp_func_success==0
-        for: 5m
-        annotations:
-          summary: "TCP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Failed,Service OffLine."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的TCP探测任务({{$labels.uuid}})失败,服务离线'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: tcp
-
-
-      - alert: ServiceProbeOffLine
-        expr: probe_http_func_success==0
-        for: 5m
-        annotations:
-          summary: "HTTP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Failed,Service OffLine."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的HTTP探测任务({{$labels.uuid}})失败,服务离线'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: http(s)
-
-      - alert: ServiceProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='serviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
-        for: 5m
-        annotations:
-          summary: "ICMP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} Packet Loss Rate is Larger Than 5%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的ICMP探测任务({{$labels.uuid}})丢包率超过阈值，丢包率{{$value}}%大于阈值5%，当前值{{$value}}%'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: icmp
-
-      - alert: SeviceProbeDelay
-        expr: 1000*sum(probe_icmp_func_duration{probe_type='serviceprobe'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='serviceprobe'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
-        for: 5m
-        annotations:
-          summary: "ICMP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{$value}} is Larger Than 200ms."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的ICMP服务探测任务({{$labels.uuid}})RTT超过阈值200ms，当前值{{$value}}ms'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: icmp
-
-      - alert: SeviceProbeDelay
-        expr: 1000 * sum(probe_tcp_func_duration) by (uuid,job_name,target,extra_name,extra_type,extra_description) >200
-        for: 5m
-        annotations:
-          summary: "TCP ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Average RTT {{ $value }} is Larger Than 200ms."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的TCP服务探测任务({{$labels.uuid}})RTT超过阈值200ms，当前值{{$value}}ms'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: tcp
-
-
-      - alert: SeviceProbeDelay
-        expr: 1000  * sum(probe_http_func_duration) by (uuid,job_name,target,extra_name,extra_type,extra_description) >200
-        for: 5m
-        annotations:
-          summary: "HTTP ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的HTTP服务探测任务({{$labels.uuid}})RTT超过阈值200ms，当前值{{$value}}ms'
-          metric_value: '{{ $value }}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: http(s)
-
-
-      - alert: SeviceProbeStatusCodeMisMatch
-        expr: probe_valid_status_code_matched==0
-        for: 5m
-        annotations:
-          summary: "ServiceProbe Job {{$labels.uuid}} {{$labels.job_name}} StatusCode MisMatched."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的HTTP服务探测任务失败，HTTP Code码不匹配'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: http(s)
-
-      - alert: SeviceProbeResponseMisMatch
-        expr: probe_failed_due_to_regex==0
-        for: 5m
-        annotations:
-          summary: "ServiceProbe Job {{$labels.uuid}}/{{$labels.job_name}} Response MisMatch."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的HTTP服务探测任务失败，响应内容不匹配'
-          metric_value: '{{ $value }}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: http(s)
-
-
-      - alert: ServiceProbeAuthFailed
-        expr: probe_http_status_code==401
-        for: 5m
-        annotations:
-          summary: "HTTP/HTTPS ServiceProbe Job {{ $labels.uuid }}/{{ $labels.job_name }} Authorization Failed, Status Code {{$value}}."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})的HTTP服务探测用户认证失败,状态码:{{$value}}'
-          metric_value: '{{ $value }}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-          protocol: http(s)
-
-
-      - alert: ServiceProbeUnknown
-        expr: probe_icmp_func_success{probe_type='serviceprobe'}!=1 or probe_http_func_success!=1 or probe_tcp_func_success!=1
-        for: 5m
-        annotations:
-          summary: "Service Probe Job {{$labels.uuid}}/{{$labels.job_name}} Failed."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})服务探测任务({{$labels.uuid}})执行失败'
-          metric_value: '{{ $value }}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: service_probe
-
-
-      # 网络探测：离线
-      - alert: NetProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) ==100
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is 100%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})连续三次探测丢包率为{{$value}}%，目标离线'
-          metric_value: '{{ $value }}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: net_probe
-          protocol: icmp
-
-      - alert: NetProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}} {{ $labels.job_name }} Packet Loss Rate is Larger Than 5%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})丢包率超过阈值5%，丢包率{{$value}}%'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: net_probe
-          protocol: icmp
-
-      - alert: NetProbeDelay
-        expr: 1000  *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='eip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='eip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})的RTT超过阈值 200ms，平均RTT{{$value}}'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: net_probe
-          protocol: icmp
-
-      - alert: NetProbeUnknown
-        expr: probe_icmp_func_success{probe_type='netprobe',extra_ip_type='eip'}!=1
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})探测任务执行失败,探测结果未知'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.extra_name}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: net_probe
-          protocol: icmp
-
-      # 5GC_IP网络探测：离线
-      - alert: NetProbeOffLine
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) ==100
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}}/{{$labels.job_name}} Packet Loss Rate is 100%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})连续三次探测丢包率为{{$value}}%，目标离线'
-          metric_value: '{{ $value }}'
-          alert_object: '{{$labels.target}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: edge_5gc_probe
-          protocol: icmp
-
-      - alert: NetProbePacketLoss
-        expr: 100 * (sum(probe_icmp_result_count{status='failed',probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / on(uuid,job_name,target,extra_name,extra_type,extra_description) group_left() sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description)) >5
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}} {{ $labels.job_name }} Packet Loss Rate is Larger Than 5%."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})丢包率超过阈值5%，丢包率{{$value}}%'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.target}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: edge_5gc_probe
-          protocol: icmp
-
-      - alert: NetProbeDelay
-        expr: 1000 *sum(probe_icmp_func_duration{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by (uuid,job_name,target,extra_name,extra_type,extra_description) / sum(probe_icmp_result_count{probe_type='netprobe',extra_ip_type='mec_5g_ip'}) by  (uuid,job_name,target,extra_name,extra_type,extra_description) >200
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} RTT Delay is Larger Than 200ms."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})的RTT超过阈值 200ms，平均RTT{{$value}}'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.target}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: edge_5gc_probe
-          protocol: icmp
-
-      - alert: NetProbeUnknown
-        expr: probe_icmp_func_success{probe_type='netprobe',extra_ip_type='mec_5g_ip'}!=1
-        for: 5m
-        annotations:
-          summary: "NetProbe Job {{$labels.uuid}} {{$labels.job_name}} Probe Failed."
-          description: '{{$labels.extra_description}}:{{$labels.extra_name}}({{$labels.target}})探测任务({{$labels.uuid}})探测任务执行失败,探测结果未知'
-          metric_value: '{{$value}}'
-          alert_object: '{{$labels.target}}'
-        labels:
-          level: p1
-          category: event
-          obj_type: edge_5gc_probe
-          protocol: icmp
-    
