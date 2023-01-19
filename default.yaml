@@ -43,7 +43,7 @@ groups:
         for: 5m
         annotations:
           description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟CPU使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "CPU当前使用率: {{ $value }}"
+          summary: "CPU当前使用率: {{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
           level: p1
@@ -56,7 +56,7 @@ groups:
         for: 5m
         annotations:
           description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟CPU使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "CPU当前使用率: {{ $value }}"
+          summary: "CPU当前使用率: {{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
           level: p2
@@ -69,7 +69,7 @@ groups:
         for: 5m
         annotations:
           description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟内存使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "内存当前使用率: {{ $value }}"
+          summary: "内存当前使用率: {{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
           level: p1
@@ -82,7 +82,7 @@ groups:
         for: 5m
         annotations:
           description: "{{ $labels.instance_name }}({{ reReplaceAll \":(.*)\" \"\" $labels.instance }})持续5分钟内存使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "内存当前使用率: {{ $value }}"
+          summary: "内存当前使用率: {{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.instance_name }}'
         labels:
           level: p2
@@ -132,11 +132,11 @@ groups:
           obj_type: vm
 
       - alert: PhysicalNodeCpuUsage
-        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id))) *100 > 90
+        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(instance,cluster,vim_id,area_code,area_name,node_id,memp_id)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(instance,cluster,vim_id,area_code,area_name,node_id,memp_id))) *100 > 90
         for: 5m
         annotations:
           description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟CPU使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "CPU当前使用率: {{ $value | printf \"%.2f\" }}%"
+          summary: "CPU当前使用率: {{ $value | humanizePercentage }}"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p1
@@ -144,11 +144,11 @@ groups:
           obj_type: node
 
       - alert: PhysicalNodeCpuUsage
-        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(cluster,instance,vim_id,area_code,area_name,node_id))) *100 > 80
+        expr: (1-(sum(increase(node_cpu_seconds_total{mode="idle",job="node-exporter"}[5m]))by(instance,cluster,vim_id,area_code,area_name,node_id,memp_id)) / (sum(increase(node_cpu_seconds_total{job="node-exporter"}[5m]))by(instance,cluster,vim_id,area_code,area_name,node_id,memp_id))) *100 > 80
         for: 5m
         annotations:
           description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟CPU使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "CPU当前使用率: {{ $value | printf \"%.2f\" }}%"
+          summary: "CPU当前使用率:{{ $value | humanizePercentage }}"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p2
@@ -160,7 +160,7 @@ groups:
         for: 5m
         annotations:
           description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "内存当前使用率: {{ $value | printf \"%.2f\" }}%"
+          summary: "内存当前使用率: {{ $value | humanizePercentage }}"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p1
@@ -171,8 +171,8 @@ groups:
         expr: 100 - ((node_memory_MemAvailable_bytes{job="node-exporter"} * 100) / node_memory_MemTotal_bytes{job="node-exporter"}) > 80
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "内存当前使用率: {{ $value | printf \"%.2f\" }}%"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟内存使用率大于80%，当前值{{ $value | humanizePercentage }}"
+          summary: "内存当前使用率: {{ $value | humanizePercentage }}"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p2
@@ -183,8 +183,8 @@ groups:
         expr: 100 - ((node_filesystem_avail_bytes{device=~'.*vd.*',job="node-exporter"} * 100) / node_filesystem_size_bytes{device=~'.*vd.*',job="node-exporter"}) > 90
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "磁盘目录{{ $labels.mountpoint }} 使用当前率: {{ $value | printf \"%.2f\" }}%"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于90%，当前值{{ $value | humanizePercentage }}"
+          summary: "磁盘目录{{ $labels.mountpoint }} 使用当前率: {{ $value | humanizePercentage }}"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p1
@@ -195,14 +195,13 @@ groups:
         expr: 100 - ((node_filesystem_avail_bytes{device=~'.*vd.*',job="node-exporter"} * 100) / node_filesystem_size_bytes{device=~'.*vd.*',job="node-exporter"}) > 80
         for: 5m
         annotations:
-          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
-          summary: "磁盘目录{{ $labels.mountpoint }}使用当前率:{{ $value | printf \"%.2f\" }}%"
+          description: "物理机{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}持续5分钟磁盘使用率大于80%，当前值{{ $value | humanizePercentage }}"
+          summary: "磁盘目录{{ $labels.mountpoint }}使用当前率:{{ $value | humanizePercentage }}"
           alert_object: "{{ $labels.instance }}"
         labels:
           level: p2
           category: capability
           obj_type: node
-      # Pod处于non-ready状态超过5分钟
       - alert: PodNotReady
         expr: kube_pod_status_phase{phase=~"Unknown|Failed"} > 0
         for: 5m
@@ -271,8 +270,8 @@ groups:
       #容器持续5分钟CPU使用率大于80%
       - alert: ContainerCpuUsage
         expr: |
-          sum(irate(container_cpu_usage_seconds_total{container =~'.*',container !='',container!='POD'}[5m])) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id) 
-          / (sum(container_spec_cpu_quota{container =~'.*',container !='',container!='POD'}/100000) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id)) *100 > 80
+          sum(irate(container_cpu_usage_seconds_total{container =~'.*',container !='',container!='POD'}[5m])) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id) 
+          / (sum(container_spec_cpu_quota{container =~'.*',container !='',container!='POD'}/100000) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id)) *100 > 80
         for: 5m
         labels:
           level: p2
@@ -280,15 +279,15 @@ groups:
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟CPU使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
+          description: "命名空间{{ $labels.namespace }}下的容器({{ $labels.container }})持续5分钟CPU使用率大于80%，当前值{{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟CPU使用率大于90%
       - alert: ContainerCpuUsage
         expr: |
-          sum(irate(container_cpu_usage_seconds_total{container =~'.*',container !='',container!='POD'}[5m])) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id) 
+          sum(irate(container_cpu_usage_seconds_total{container !='',container!='POD'}[5m])) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id) 
           / 
-          (sum(container_spec_cpu_quota{container =~'.*',container !='',container!='POD'}/100000) by (container,pod,area_name,area_code,node_name,namespace,name,vim_id)) *100 > 90
+          (sum(container_spec_cpu_quota{container !='',container!='POD'}/100000) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id)) *100 > 90
         for: 5m
         labels:
           level: p1
@@ -296,41 +295,39 @@ groups:
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "命名空间{{ $labels.namespace }}的{{ $labels.name }}持续5分钟CPU使用率大于90%，当前值{{ $value | printf \"%.2f\" }}%"
+          description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续5分钟CPU使用率大于90%，当前值{{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟内存使用率大于80%
       - alert: ContainerMemoryUsage
         expr: |
-          (sum(container_memory_working_set_bytes{name!=""}) BY (area_name,area_code,node_name,namespace,instance, name,vim_id) 
-          / sum(container_spec_memory_limit_bytes > 0) BY (area_name,area_code,node_name,namespace,instance,name,vim_id) * 100) > 80
+          (sum(container_memory_working_set_bytes) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) 
+          / sum(container_spec_memory_limit_bytes > 0) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) * 100) > 80
         for: 5m
         labels:
           level: p2
           category: capability
           obj_type: pod
         annotations:
-          summary: Container CPU usage (instance {{ $labels.name }})
-          description: "命名空间{{ $labels.namespace }}的容器{{ $labels.name }}持续5分钟内存使用率大于80%，当前值{{ $value | printf \"%.2f\" }}%"
+          summary: Container CPU usage (Container {{ $labels.container }})
+          description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续5分钟内存使用率大于80%，当前值{{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟内存使用率大于90%
       - alert: ContainerMemoryUsage
         expr: |
-          (sum(container_memory_working_set_bytes{name!=""}) BY (area_name,area_code,node_name,namespace,instance,name,vim_id) 
-            / sum(container_spec_memory_limit_bytes > 0) BY (area_name,area_code,node_name,namespace,instance, name,vim_id) * 100) > 90
+          (sum(container_memory_working_set_bytes) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) 
+            / sum(container_spec_memory_limit_bytes > 0) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) * 100) > 90
         for: 5m
         labels:
           level: p1
           category: capability
           obj_type: pod
         annotations:
-          summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "命名空间{{ $labels.namespace }}的容器{{ $labels.name }}持续5分钟内存使用率大于90%，当前值{{ $value  | printf \"%.2f\" }}%"
+          summary: Container CPU usage (container {{ $labels.container }})
+          description: "命名空间({{ $labels.namespace }})的容器({{ $labels.name }})持续5分钟内存使用率大于90%，当前值{{ $value  | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
-
-      # Deployment 部署失败
       - alert: KubernetesDeploymentGenerationMismatch
         expr: kube_deployment_status_observed_generation != kube_deployment_metadata_generation
         for: 10m
@@ -340,7 +337,7 @@ groups:
           obj_type: workload
         annotations:
           summary: A Deployment has failed but has not been rolled back.
-          description: "命名空间{{ $labels.namespace }}的Deployment{{ $labels.deployment }} 未能成功部署"
+          description: "命名空间{{ $labels.namespace }}的Deployment({{ $labels.deployment }}) 未能成功部署"
           alert_object: "{{ $labels.deployment }}"
 
         # Deployment副本数未达到预期超过2分钟
@@ -349,7 +346,7 @@ groups:
         for: 2m
         annotations:
           summary: 【p1】deployment generation mismatch
-          description: '命名空间{{ $labels.namespace }}的{{ $labels.deployment }} 副本数未达到预期。'
+          description: '命名空间{{ $labels.namespace }}的Deployment({{ $labels.deployment }}) 副本数未达到预期。'
           alert_object: "{{ $labels.deployment }}"
         labels:
           level: p2
@@ -367,7 +364,7 @@ groups:
           obj_type: workload
         annotations:
           summary: "Kubernetes StatefulSet generation mismatch (statefulset {{ $labels.statefulset }})"
-          description: "命名空间{{ $labels.namespace }}的StatefulSet{{ $labels.statefulset }} 未能成功部署"
+          description: "命名空间({{ $labels.namespace }})的StatefulSet({{ $labels.statefulset }}) 未能成功部署"
           alert_object: '{{ $labels.statefulset }}'
 
         #  StatefulSet，生成的资源与定义的资源不匹配
@@ -380,10 +377,9 @@ groups:
           obj_type: workload
         annotations:
           summary: "A StatefulSet went down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-          description: "命名空间{{ $labels.namespace }}的StatefulSet{{ $labels.statefulset }}部署失败，生成的资源与定义的资源不匹配 "
+          description: "命名空间({{ $labels.namespace }})的StatefulSet({{ $labels.statefulset }})部署失败，生成的资源与定义的资源不匹配 "
           alert_object: '{{ $labels.statefulset }}'
 
-      # Node处于NotReady状态超过5分钟
       - alert: KubernetesNodeNotReady
         expr: kube_node_status_condition{condition="Ready",status="true"} == 0
         for: 5m
@@ -393,8 +389,8 @@ groups:
           obj_type: k8s
         annotations:
           summary: Kubernetes Node ready (instance {{ $labels.node }})
-          description: "Kubernetes节点{{$labels.instance}}/{{ $labels.node }} 处于NotReady状态超过5分钟"
-          alert_object: '{{ $labels.node }}'
+          description: "Kubernetes节点{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}({{ $labels.node }})处于NotReady状态超过5分钟"
+          alert_object: '{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}({{ $labels.node }})'
 
       # etcd服务
       - alert: EtcdDown
@@ -483,7 +479,7 @@ groups:
           description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上的的kubelet客户端证书将在7天后过期"
           alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         expr: |
-          apiserver_client_certificate_expiration_seconds_count{job="kubernetes-kubelet"} > 0 and histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubernetes-kubelet"}[5m]))) < 604800
+          apiserver_client_certificate_expiration_seconds_count{job=~".*kubelet"} > 0 and histogram_quantile(0.01, sum by (job,le,area_code,area_name,vim_id,node_id,node_name,mepm_id) (rate(apiserver_client_certificate_expiration_seconds_bucket{job=~".*kubelet"}[5m]))) < 604800
         for: 5m
         labels:
           level: p1
@@ -497,7 +493,7 @@ groups:
           description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上的kubelet客户端证书将在30天后过期"
           alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
         expr: |
-          apiserver_client_certificate_expiration_seconds_count{job="kubernetes-kubelet"} > 0 and histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubernetes-kubelet"}[5m]))) < 2592000
+          apiserver_client_certificate_expiration_seconds_count{job=~".*kubelet"} > 0 and histogram_quantile(0.01, sum by (job,le,area_code,area_name,vim_id,node_id,node_name,mepm_id) (rate(apiserver_client_certificate_expiration_seconds_bucket{job=~".*kubelet"}[5m]))) < 2592000
         for: 5m
         labels:
           level: p2
@@ -536,7 +532,6 @@ groups:
           category: event
           obj_type: k8s
 
-      # Persistent Volume Claim持久化存储申明状态为Failed|Pending
       - alert: PersistentVolumeClaimErrors
         expr: |
           kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
