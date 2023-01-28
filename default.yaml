@@ -472,6 +472,32 @@ groups:
           category: event
           obj_type: k8s
 
+      # Ceph服务离线或不存在
+      - alert: CephServerOffLine
+        annotations:
+          summary: Ceph Server OffLine
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上Ceph服务离线"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
+        expr: up{job=~".*ceph.*"} == 0
+        for: 3m
+        labels:
+          level: p1
+          category: event
+          obj_type: middleware
+
+      # NodeExporter离线或不存在
+      - alert: NodeExporterOffLine
+        annotations:
+          summary: NodeExporter OffLine
+          description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}上NodeExporter服务离线"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
+        expr: up{job=~".*node-exporter.*"} == 0
+        for: 3m
+        labels:
+          level: p1
+          category: event
+          obj_type: middleware
+
       # kubelet客户端证书将在7天后过期
       - alert: KubeletCertificateExpirationIn7Days
         annotations:
