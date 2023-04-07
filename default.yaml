@@ -311,7 +311,7 @@ groups:
         annotations:
           summary: Container CPU usage (Container {{ $labels.container }})
           description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续5分钟内存使用率大于80%，当前值{{ $value | humanizePercentage }}"
-          alert_object: '{{ $labels.name }}'
+          alert_object: '{{ $labels.container }}'
 
       # 持续5分钟内存使用率大于90%
       - alert: ContainerMemoryUsage
@@ -536,7 +536,7 @@ groups:
         annotations:
           summary: Cluster has overcommitted CPU resource requests for Namespaces
           description: "实例{{ reReplaceAll \":(.*)\" \"\" $labels.instance }} 集群当前请求CPU超出配额1.5倍，持续2分钟"
-          alert_object: "{{ reReplaceAll \":(.*)\" \"\" $labels.instance }}"
+          alert_object: "{{ reReplaceAll \":(.*)\" \"\" .$labelsinstance }}"
         labels:
           level: p1
           category: event
