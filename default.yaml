@@ -272,14 +272,14 @@ groups:
         expr: |
           sum(irate(container_cpu_usage_seconds_total{container =~'.*',container !='',container!='POD'}[5m])) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id) 
           / (sum(container_spec_cpu_quota{container =~'.*',container !='',container!='POD'}/100000) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id)) *100 > 80
-        for: 5m
+        for: 30m
         labels:
           level: p2
           category: capability
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "命名空间{{ $labels.namespace }}下的容器({{ $labels.container }})持续5分钟CPU使用率大于80%，当前值{{ $value | humanizePercentage }}"
+          description: "命名空间{{ $labels.namespace }}下的容器({{ $labels.container }})持续30分钟CPU使用率大于80%，当前值{{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟CPU使用率大于90%
@@ -288,14 +288,14 @@ groups:
           sum(irate(container_cpu_usage_seconds_total{container !='',container!='POD'}[5m])) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id) 
           / 
           (sum(container_spec_cpu_quota{container !='',container!='POD'}/100000) by (container,pod,namespace,area_code,area_name,vim_id,node_id,node_name,mepm_id)) *100 > 90
-        for: 5m
+        for: 30m
         labels:
           level: p1
           category: capability
           obj_type: pod
         annotations:
           summary: Container CPU usage (instance {{ $labels.instance }})
-          description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续5分钟CPU使用率大于90%，当前值{{ $value | humanizePercentage }}"
+          description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续30分钟CPU使用率大于90%，当前值{{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
       # 持续5分钟内存使用率大于80%
@@ -303,14 +303,14 @@ groups:
         expr: |
           (sum(container_memory_working_set_bytes) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) 
           / sum(container_spec_memory_limit_bytes > 0) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) * 100) > 80
-        for: 5m
+        for: 30m
         labels:
           level: p2
           category: capability
           obj_type: pod
         annotations:
           summary: Container CPU usage (Container {{ $labels.container }})
-          description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续5分钟内存使用率大于80%，当前值{{ $value | humanizePercentage }}"
+          description: "命名空间{{ $labels.namespace }}的容器({{ $labels.container }})持续30分钟内存使用率大于80%，当前值{{ $value | humanizePercentage }}"
           alert_object: '{{ $labels.container }}'
 
       # 持续5分钟内存使用率大于90%
@@ -318,14 +318,14 @@ groups:
         expr: |
           (sum(container_memory_working_set_bytes) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) 
             / sum(container_spec_memory_limit_bytes > 0) BY (container,namespace,area_name,node_name,vim_id,node_id,mepm_id) * 100) > 90
-        for: 5m
+        for: 30m
         labels:
           level: p1
           category: capability
           obj_type: pod
         annotations:
           summary: Container CPU usage (container {{ $labels.container }})
-          description: "命名空间({{ $labels.namespace }})的容器({{ $labels.name }})持续5分钟内存使用率大于90%，当前值{{ $value  | humanizePercentage }}"
+          description: "命名空间({{ $labels.namespace }})的容器({{ $labels.name }})持续30分钟内存使用率大于90%，当前值{{ $value  | humanizePercentage }}"
           alert_object: '{{ $labels.name }}'
 
       - alert: KubernetesDeploymentGenerationMismatch
